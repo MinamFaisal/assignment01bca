@@ -1,122 +1,97 @@
-package assignment01bca
-package main
-
-
+package assignment01bca //requirement of assignment
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"strconv"
-	"strings"
-	"assignment01bca"
+	"strconv" //conversion between strings and integers
 )
 
-
-type block struct {
-	Transaction  string
-	Nonce        int
-	PreviousHash string
-	Hash         string
+type Block struct {
+	Transaction        string
+	NonceX             int
+	Previous_BlockHash string
+	Hash               string
 }
 
-type blockchain struct {
-	Blocks []*block
+type Blockchain struct {
+	Blocks []*Block
 }
 
-// Declare a global blockchain variable
-var chain = blockchain{}
+// global blockchain variable (Reason: multiple functions isey access kr sky)
+var chain = Blockchain{}
 
-// CreateHash is a helper function to calculate the hash of a block.
+// Calculation of Hash of Block
 func CalculateHash(stringToHash string) string {
-	hash := sha256.Sum256([]byte(stringToHash))
-	return hex.EncodeToString(hash[:])
+	B_hash := sha256.Sum256([]byte(stringToHash))
+	return hex.EncodeToString(B_hash[:])
 }
 
-// NewBlock function creates a new block and adds it to the blockchain
-func NewBlock(transaction string, nonce int, previousHash string) *block {
-	// Create the block
-	newBlock := &block{
-		Transaction:  transaction,
-		Nonce:        nonce,
-		PreviousHash: previousHash,
+// Newblock creation and then isko hum blockchain mei add kr deingy
+func NewBlock(transaction string, noncex int, previous_BlockHash string) *Block {
+	newBlock := &Block{
+		Transaction:        transaction,
+		NonceX:             noncex,
+		Previous_BlockHash: previous_BlockHash,
 	}
-	// Calculate the hash for the new block
-	blockData := transaction + strconv.Itoa(nonce) + previousHash
-	newBlock.Hash = CalculateHash(blockData)
+	blockData := transaction + strconv.Itoa(noncex) + previous_BlockHash //new block=previous block ka hash+nonce+current block(all transations) hash
+	newBlock.Hash = CalculateHash(blockData)                             //above line se sb add kr k ab uska hash calculate krne k liye calculate hash wale function mei sb jaega
 
-	// Append block to the blockchain
-	chain.Blocks = append(chain.Blocks, newBlock)
-
+	chain.Blocks = append(chain.Blocks, newBlock) //blockhain mei add krengy
 	return newBlock
 }
 
-// ListBlocks prints out all blocks in the blockchain
+// blockchain k sarey block print hongy
 func ListBlocks() {
-	for i, blk := range chain.Blocks {
-		fmt.Printf("Block %d:\n", i)
-		fmt.Printf("\tTransaction: %s\n", blk.Transaction)
-		fmt.Printf("\tNonce: %d\n", blk.Nonce)
-		fmt.Printf("\tPrevious Hash: %s\n", blk.PreviousHash)
-		fmt.Printf("\tHash: %s\n\n", blk.Hash)
+	for i, block := range chain.Blocks {
+
+		fmt.Printf("\033[31mBlock %d:\033[0m\n", i)
+
+		fmt.Printf("\033[32m\tTransaction: %s\033[0m\n", block.Transaction)
+
+		fmt.Printf("\033[33m\tNonce(X): %d\033[0m\n", block.NonceX)
+
+		fmt.Printf("\033[34m\tPrevious Block Hash: %s\033[0m\n", block.Previous_BlockHash)
+
+		fmt.Printf("\033[35m\tHash: %s\033[0m\n\n", block.Hash)
 	}
 }
 
+// test krne k liye block ko change krengy
+func ChangeBlock(BlockNo int, NewTransaction string) {
+	if BlockNo < len(chain.Blocks) {
+		//block ki transaction ko change krengy
+		block := chain.Blocks[BlockNo]
+		block.Transaction = NewTransaction
 
-// ChangeBlock allows changing the transaction of a block at a specific index
-func ChangeBlock(index int, newTransaction string) {
-	if index < len(chain.Blocks) {
-		chain.Blocks[index].Transaction = newTransaction
-		// Recalculate the hash since the transaction has changed
-		blockData := newTransaction + strconv.Itoa(chain.Blocks[index].Nonce) + chain.Blocks[index].PreviousHash
-		chain.Blocks[index].Hash = CalculateHash(blockData)
+		//or transaction chnge hone k bad dobara se hash calculate krengy
+		blockData := NewTransaction + strconv.Itoa(block.NonceX) + block.Previous_BlockHash
+		block.Hash = CalculateHash(blockData)
 	}
 }
 
-
-// VerifyChain checks the validity of the blockchain
+// blockhain ki verfication hogi
 func VerifyChain() bool {
 	for i := 1; i < len(chain.Blocks); i++ {
-		previousBlock := chain.Blocks[i-1]
-		currentBlock := chain.Blocks[i]
 
-		// Recalculate the hash to verify it matches
-		blockData := currentBlock.Transaction + strconv.Itoa(currentBlock.Nonce) + currentBlock.PreviousHash
+		previousBlock := chain.Blocks[i-1] //previous block hash
+		currentBlock := chain.Blocks[i]    //cureent block hSH
+
+		//ab dobara current block ka hash calculate krengy
+		blockData := currentBlock.Transaction + strconv.Itoa(currentBlock.NonceX) + currentBlock.Previous_BlockHash
 		calculatedHash := CalculateHash(blockData)
 
-		// If hash doesn't match, blockchain is invalid
-		if currentBlock.Hash != calculatedHash || currentBlock.PreviousHash != previousBlock.Hash {
-			fmt.Printf("Block %d has been tampered with!\n", i)
+		// compare krengy current block k hash ko or previous block k hash ko
+		if currentBlock.Hash != calculatedHash || currentBlock.Previous_BlockHash != previousBlock.Hash {
+			fmt.Printf("\033[31mBlock %d has been tampered!\033[0m\n", i)
 			return false
 		}
 	}
 
-	fmt.Println("Blockchain is valid!")
+	// Good blockhain,Yahoooo!!!!!
+	fmt.Println("\033[1;32m*****************\033[0m")
+	fmt.Println("\033[32mBlockchain is valid!\033[0m")
+	fmt.Println("\033[1;32m*****************\033[0m")
+
 	return true
 }
-
-
-
-
-func main() {
-	// Create some blocks
-	genesisBlock := assignment01bca.NewBlock("genesis to bob", 1, "")
-	fmt.Println("Genesis Block created!")
-	assignment01bca.NewBlock("bob to alice", 2, genesisBlock.Hash)
-	assignment01bca.NewBlock("alice to eve", 3, genesisBlock.Hash)
-
-	// List the blocks
-	fmt.Println("Listing all blocks in the blockchain:")
-	assignment01bca.ListBlocks()
-
-	// Change a block and list blocks again
-	fmt.Println("Changing the transaction of Block 1...")
-	assignment01bca.ChangeBlock(1, "bob to charlie")
-	assignment01bca.ListBlocks()
-
-	// Verify the blockchain
-	fmt.Println("Verifying the blockchain after modification:")
-	assignment01bca.VerifyChain()
-}
-
-
